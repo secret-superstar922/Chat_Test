@@ -1,0 +1,18 @@
+{
+  "name": "chat",
+  "description": "",
+  "main": "server.ts",
+  "authors": [
+    "hit-dev <leonpwlwsk0713@gmail.com>"
+  ],
+  "license": "ISC",
+  "homepage": "https://github.com/secret-superstar922/Chat_Test",
+  "private": true,
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ]
+}
