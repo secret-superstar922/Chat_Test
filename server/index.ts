@@ -1,5 +1,6 @@
 import { WebSocket, WebSocketServer } from "ws";
 import express, {Request, Response} from 'express';
+import conn from './database';
 
 const app = express();
 app.use(express.static('public'));
@@ -8,9 +9,11 @@ app.get('/', (req: Request, res: Response) => {
 });
 
 const port = 3000;
-app.listen(port, () => {
-    console.log(`Server is running on port ${port}`);
-});
+conn.then(async() => {
+    app.listen(port, () => {
+        console.log(`Server is running on port ${port}`);
+    });
+}).catch(error => console.log('Server failed on started'));
 
 const wss: WebSocketServer = new WebSocketServer({
     port:8080
