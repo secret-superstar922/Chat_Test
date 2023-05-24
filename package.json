@@ -15,6 +15,7 @@
     "@types/polymer": "^1.2.12",
     "bower": "^1.8.14",
     "express": "^4.18.2",
+    "mongoose": "^7.2.0",
     "plugin-typescript": "^8.0.0",
     "polymer-cli": "^1.9.0-pre.2",
     "systemjs": "^6.14.1",

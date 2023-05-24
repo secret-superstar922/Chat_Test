@@ -28,7 +28,8 @@ wss.on('connection', (ws: WebSocket) => {
     ws.on('message', (str_data: string)=>{
         const data_json = JSON.parse(str_data);
         if(data_json.command ==="connect") {
-            clients.push({ws:ws, uuid:generateUserId(), username:data_json.data});
+            let newUser:client = {ws:ws, uuid:generateUserId(), username:data_json.data};
+            clients.push(newUser);
         }
         clients.forEach((client) => {
             console.log(client);
