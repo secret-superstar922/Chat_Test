@@ -6,7 +6,7 @@ function login() {
     const ws = new WebSocket('ws://localhost:8080');
     ws.onopen = () => {
         const data = {
-            command: "register",
+            command: "connect",
             data: username,
         };
         const json = JSON.stringify(data);

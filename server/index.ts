@@ -16,10 +16,27 @@ const wss: WebSocketServer = new WebSocketServer({
     port:8080
 });
 
+interface client {
+    ws: WebSocket,
+    uuid: String,
+    username: String
+}
+
+let clients: client[] = []
+
 wss.on('connection', (ws: WebSocket) => {
-    ws.on('message', (data: string)=>{
-        const obj = JSON.parse(data);
-        console.log(obj.command);
+    ws.on('message', (str_data: string)=>{
+        const data_json = JSON.parse(str_data);
+        if(data_json.command ==="connect") {
+            clients.push({ws:ws, uuid:generateUserId(), username:data_json.data});
+        }
+        clients.forEach((client) => {
+            console.log(client);
+        });
     });
 })
+
+function generateUserId(): String {
+    return Math.random().toString(36).substr(2, 8);
+}
 
