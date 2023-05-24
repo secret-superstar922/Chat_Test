@@ -1,17 +1,19 @@
-import WebSocket, {WebSocketServer} from 'ws';
+import { WebSocket, WebSocketServer } from "ws";
+import express, {Request, Response} from 'express';
+
+const app = express();
+app.use(express.static('public'));
+app.get('/', (req: Request, res: Response) => {
+    res.sendFile(__dirname + '/index.html');
+});
+
+const port = 3000;
+app.listen(port, () => {
+    console.log(`Server is running on port ${port}`);
+});
 
 const wss: WebSocketServer = new WebSocketServer({
     port:8080
-});
-
-const ws: WebSocket = new WebSocket('ws://localhost:8080');
-ws.on('open', () => {
-    const data: Object = {
-        command: "register",
-        content: "",
-    }
-    const json: string = JSON.stringify(data);
-    ws.send(json);
 });
 
 wss.on('connection', (ws: WebSocket) => {
@@ -20,3 +22,4 @@ wss.on('connection', (ws: WebSocket) => {
         console.log(obj.command);
     });
 })
+

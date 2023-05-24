@@ -1,0 +1,21 @@
+{
+  "name": "src",
+  "homepage": "https://github.com/secret-superstar922/Chat_Test",
+  "authors": [
+    "hit-dev <leonpwlwsk0713@gmail.com>"
+  ],
+  "description": "",
+  "main": "",
+  "license": "MIT",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "polymer": "Polymer/polymer#2.0.0-rc.3"
+    
+  }
+}
