@@ -1,6 +1,7 @@
 import { WebSocket, WebSocketServer } from "ws";
 import express, {Request, Response} from 'express';
 import conn from './database';
+import {User} from './models';
 
 const app = express();
 app.use(express.static('public'));
@@ -31,8 +32,21 @@ wss.on('connection', (ws: WebSocket) => {
     ws.on('message', (str_data: string)=>{
         const data_json = JSON.parse(str_data);
         if(data_json.command ==="connect") {
-            let newUser:client = {ws:ws, uuid:generateUserId(), username:data_json.data};
-            clients.push(newUser);
+            let requestedUser:client = {ws:ws, uuid:generateUserId(), username:data_json.data};
+
+            User.findOne({username: requestedUser.username})
+                .then((user) => {
+                    if(!user) {
+                        const newUser = new User({
+                            username:requestedUser.username
+                        });
+                        newUser.save();
+                        clients.push(requestedUser);
+                    }
+                    else {
+                        console.log("Username has been taken!");
+                    }
+                }).catch(error => console.log(error));
         }
         clients.forEach((client) => {
             console.log(client);

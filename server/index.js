@@ -15,6 +15,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const ws_1 = require("ws");
 const express_1 = __importDefault(require("express"));
 const database_1 = __importDefault(require("./database"));
+const models_1 = require("./models");
 const app = (0, express_1.default)();
 app.use(express_1.default.static('public'));
 app.get('/', (req, res) => {
@@ -34,8 +35,20 @@ wss.on('connection', (ws) => {
     ws.on('message', (str_data) => {
         const data_json = JSON.parse(str_data);
         if (data_json.command === "connect") {
-            let newUser = { ws: ws, uuid: generateUserId(), username: data_json.data };
-            clients.push(newUser);
+            let requestedUser = { ws: ws, uuid: generateUserId(), username: data_json.data };
+            models_1.User.findOne({ username: requestedUser.username })
+                .then((user) => {
+                if (!user) {
+                    const newUser = new models_1.User({
+                        username: requestedUser.username
+                    });
+                    newUser.save();
+                    clients.push(requestedUser);
+                }
+                else {
+                    console.log("Username has been taken!");
+                }
+            }).catch(error => console.log(error));
         }
         clients.forEach((client) => {
             console.log(client);
