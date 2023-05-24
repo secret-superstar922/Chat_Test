@@ -1,0 +1,38 @@
+<link rel="import" href="../../bower_components/polymer/polymer.html">
+<link rel="import" href="../../bower_components/app-route/app-location.html">
+<link rel="import" href="../../bower_components/app-route/app-route.html">
+<link rel="import" href="../../bower_components/iron-pages/iron-pages.html">
+
+<dom-module id="my-app">
+  <template>
+    <style>
+      :host {
+        display: block;
+      }
+    </style>
+
+    <app-location route="{{route}}"></app-location>
+
+    <app-route
+      route="{{route}}"
+      pattern="/:page"
+      data="{{routeData}}"
+      tail="{{subroute}}"
+    ></app-route>
+
+    <iron-pages selected="[[routeData.page]]" attr-for-selected="name">
+      <login-page name="login"></login-page>
+      <chat-page name="chat"></chat-page>
+    </iron-pages>
+  </template>
+
+  <script>
+    class MyApp extends Polymer.Element {
+      static get is() {
+        return 'my-app';
+      }
+    }
+
+    customElements.define(MyApp.is, MyApp);
+  </script>
+</dom-module>
