@@ -27,12 +27,43 @@ app.post("/login", (req: Request, res: Response) => {
                     uuid: req.body.uuid
                 });
                 newUser.save();
-                res.send({status: "200", success: true, payload:req.body});
+
+                res.send({
+                    status: "200", 
+                    success: true, 
+                    payload: req.body
+                });
             }
             else {
-                res.send({status: "200", success: false, payload:"The use has been taken!"});
+                res.send({
+                    status: "200", 
+                    success: false, 
+                    payload: "The user has been taken!"
+                });
             }
         }).catch(error => console.log(error));
+});
+
+app.post("/message", (req: Request, res: Response) => {
+    const user1: string = req.body.user1;
+    const user2: string = req.body.user2;
+    
+    Message.find({
+        $or: [
+            {
+                from: user1,
+                to: user2
+            },
+            {
+                from: user2,
+                to: user1
+            }
+        ]
+    }).then(messages => {
+        res.send({
+            payload: messages
+        });
+    })
 });
 
 const port = 3000;
@@ -59,9 +90,8 @@ wss.on('connection', (ws: WebSocket) => {
         let isValidUser: Boolean = true;
 
         const data_json = JSON.parse(str_data);
-        
+
         if(data_json.command === "connect") {
-            
             clients.forEach(client => {
                 if(client.username === data_json.username) {
                     isValidUser = false;
@@ -107,15 +137,15 @@ wss.on('connection', (ws: WebSocket) => {
             console.log(data_json);
 
             clients.forEach((client) => {
-                if(client.uuid === data_json.to.uuid) {
+                if(client.username === data_json.to.username) {
                     client.ws.send(JSON.stringify({
                         type: "message",
-                        from: data_json.from,
+                        from: data_json.from.username,
                         text: data_json.text
                     }));
 
                     const newMessage = new Message({
-                        from: data_json.from,
+                        from: data_json.from.username,
                         to: data_json.to.username,
                         text: data_json.text,
                         created_at: new Date()

@@ -37,12 +37,40 @@ app.post("/login", (req, res) => {
                 uuid: req.body.uuid
             });
             newUser.save();
-            res.send({ status: "200", success: true, payload: req.body });
+            res.send({
+                status: "200",
+                success: true,
+                payload: req.body
+            });
         }
         else {
-            res.send({ status: "200", success: false, payload: "The use has been taken!" });
+            res.send({
+                status: "200",
+                success: false,
+                payload: "The user has been taken!"
+            });
         }
     }).catch(error => console.log(error));
+});
+app.post("/message", (req, res) => {
+    const user1 = req.body.user1;
+    const user2 = req.body.user2;
+    Message_1.Message.find({
+        $or: [
+            {
+                from: user1,
+                to: user2
+            },
+            {
+                from: user2,
+                to: user1
+            }
+        ]
+    }).then(messages => {
+        res.send({
+            payload: messages
+        });
+    });
 });
 const port = 3000;
 database_1.default.then(() => __awaiter(void 0, void 0, void 0, function* () {
@@ -101,14 +129,14 @@ wss.on('connection', (ws) => {
         else if (data_json.command === "sendMessage") {
             console.log(data_json);
             clients.forEach((client) => {
-                if (client.uuid === data_json.to.uuid) {
+                if (client.username === data_json.to.username) {
                     client.ws.send(JSON.stringify({
                         type: "message",
-                        from: data_json.from,
+                        from: data_json.from.username,
                         text: data_json.text
                     }));
                     const newMessage = new Message_1.Message({
-                        from: data_json.from,
+                        from: data_json.from.username,
                         to: data_json.to.username,
                         text: data_json.text,
                         created_at: new Date()

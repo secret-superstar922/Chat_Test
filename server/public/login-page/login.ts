@@ -1,8 +1,8 @@
 function login() {
     const inputElement = document.getElementById("username") as HTMLInputElement;
-    const username = inputElement.value;
+
     const user = {
-      name: username,
+      name: inputElement.value,
       uuid: generateUserId()
     };
   
@@ -18,8 +18,8 @@ function login() {
       .then(response => { 
         if (response.ok) {
           response.json().then(payload => {
-            localStorage.setItem("username", payload.payload.name);
-            localStorage.setItem("uuid", payload.payload.uuid);
+            localStorage.setItem("username", user.name);
+            localStorage.setItem("uuid", user.uuid);
             window.location.assign('/chat-page');
           });
         } else {
@@ -29,6 +29,6 @@ function login() {
   }
   
 
-function generateUserId(): String {
+function generateUserId(): string {
     return Math.random().toString(36).substr(2, 8);
 }

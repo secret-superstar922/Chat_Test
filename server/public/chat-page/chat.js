@@ -37,8 +37,31 @@ ws.onmessage = (e) => {
                 if (userElement.textContent) {
                     selectedUser.username = userElement.textContent;
                 }
-                userElement.style.backgroundColor = "red";
                 console.log(selectedUser);
+                var userElementList = document.getElementsByClassName('user');
+                for (var i = 0; i < userElementList.length; i++) {
+                    userElementList[i].classList.remove('active');
+                }
+                userElement.setAttribute("class", "user active");
+                const userPair = {
+                    user1: localStorage.getItem("username"),
+                    user2: userElement.textContent
+                };
+                let options = {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json;charset=utf-8'
+                    },
+                    body: JSON.stringify(userPair)
+                };
+                fetch("http://localhost:3000/message", options)
+                    .then(response => {
+                    if (response.ok) {
+                        response.json().then(payload => {
+                            console.log(payload);
+                        });
+                    }
+                });
             });
             userlistElement.appendChild(userElement);
         });
@@ -55,7 +78,10 @@ function sendMessage() {
     const messageElement = document.getElementById("message");
     const data = {
         command: "sendMessage",
-        from: localStorage.getItem("username"),
+        from: {
+            username: localStorage.getItem("username"),
+            uuid: localStorage.getItem("uuid")
+        },
         to: selectedUser,
         text: messageElement.value
     };

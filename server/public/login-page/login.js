@@ -1,9 +1,8 @@
 "use strict";
 function login() {
     const inputElement = document.getElementById("username");
-    const username = inputElement.value;
     const user = {
-        name: username,
+        name: inputElement.value,
         uuid: generateUserId()
     };
     let options = {
@@ -17,8 +16,8 @@ function login() {
         .then(response => {
         if (response.ok) {
             response.json().then(payload => {
-                localStorage.setItem("username", payload.payload.name);
-                localStorage.setItem("uuid", payload.payload.uuid);
+                localStorage.setItem("username", user.name);
+                localStorage.setItem("uuid", user.uuid);
                 window.location.assign('/chat-page');
             });
         }
