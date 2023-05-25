@@ -57,40 +57,50 @@ wss.on('connection', (ws: WebSocket) => {
 
         const data_json = JSON.parse(str_data);
         
-        if(data_json.command ==="connect") {
+        if(data_json.command === "connect") {
             console.log(data_json.content);
-        }
+            clients.forEach(client => {
+                if(client.username === data_json.content) {
+                    isValidUser = false;
+                }
+            })
+    
+            if(isValidUser) {
+                const newClient: client = {
+                    ws:ws,
+                    uuid:generateUserId(),
+                    username: data_json.content
+                }
+        
+                clients.forEach((client) => {
+                    client.ws.send(JSON.stringify({
+                        type: "broadcast",
+                        uuid: newClient.uuid,
+                        username: newClient.username
+                    }))
+                });
+        
+                clients.forEach((client) => {
+                    ws.send(JSON.stringify({
+                        type: "addUserList",
+                        uuid: client.uuid,
+                        username: client.username
+                    }));
+                });
 
-        clients.forEach(client => {
-            if(client.username === data_json.content) {
-                isValidUser = false;
+                clients.push(newClient);
             }
-        })
-
-        if(isValidUser) {
-            const newClient: client = {
-                ws:ws,
-                uuid:generateUserId(),
-                username: data_json.content
-            }
-    
+        } else if(data_json.command === "sendMessage") {
+            console.log(data_json);
             clients.forEach((client) => {
-                client.ws.send(JSON.stringify({
-                    type: "broadcast",
-                    uuid: newClient.uuid,
-                    username: newClient.username
-                }))
-            });
-    
-            clients.forEach((client) => {
-                ws.send(JSON.stringify({
-                    type: "addUserList",
-                    uuid: client.uuid,
-                    username: client.username
-                }));
-            });
-    
-            clients.push(newClient);
+                if(client.uuid === data_json.to.uuid) {
+                    client.ws.send(JSON.stringify({
+                        type: "message",
+                        from: data_json.from,
+                        text: data_json.text
+                    }));
+                }
+            })
         }
     });
 })

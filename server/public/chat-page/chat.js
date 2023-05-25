@@ -1,7 +1,10 @@
 "use strict";
 const ws = new WebSocket("ws://localhost:8080");
 let userList = [];
-let selectedUser;
+let selectedUser = {
+    uuid: "",
+    username: ""
+};
 ws.onopen = (e) => {
     const username = localStorage.getItem("auth");
     const data = {
@@ -19,6 +22,10 @@ ws.onmessage = (e) => {
             username: json_data.username
         });
         const userlistElement = document.getElementById("userlist");
+        const childElements = userlistElement.querySelectorAll('p');
+        childElements.forEach(childElement => {
+            childElement.remove();
+        });
         userList.map((user) => {
             var userElement = document.createElement("p");
             userElement.setAttribute("id", user.uuid);
@@ -30,15 +37,24 @@ ws.onmessage = (e) => {
                     selectedUser.username = userElement.textContent;
                 }
                 userElement.style.backgroundColor = "red";
+                console.log(selectedUser);
             });
             userlistElement.appendChild(userElement);
         });
+    }
+    else if (json_data.type === "message") {
+        const chatboardElement = document.getElementById('chatboard');
+        const chatContentElement = document.createElement('div');
+        chatContentElement.setAttribute('class', 'chat-content');
+        chatContentElement.textContent = json_data.text;
+        chatboardElement.appendChild(chatContentElement);
     }
 };
 function sendMessage() {
     const messageElement = document.getElementById("message");
     const data = {
         command: "sendMessage",
+        from: localStorage.getItem("auth"),
         to: selectedUser,
         text: messageElement.value
     };

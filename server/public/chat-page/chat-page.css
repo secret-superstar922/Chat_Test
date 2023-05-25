@@ -8,3 +8,9 @@
     border: 2px solid;
     border-color: black;
 }
+
+.chat-content{
+    border: 2px solid;
+    background-color: aqua;
+    padding: 2px;
+}
