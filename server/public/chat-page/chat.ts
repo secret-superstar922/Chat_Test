@@ -1,7 +1,7 @@
 const ws:WebSocket = new WebSocket("ws://localhost:8080");
 interface user {
-    uuid: String,
-    username: String
+    uuid: string,
+    username: string
 }
 
 let userList: user[] = [];
@@ -24,5 +24,14 @@ ws.onmessage = (e) => {
             uuid:json_data.uuid,
             username: json_data.username
         });
+        const userlistElement = document.getElementById("userlist") as HTMLElement;
+        userList.map((user) => {
+            var userElement = document.createElement("p") as HTMLElement;
+            userElement.setAttribute("id", user.uuid);
+            userElement.setAttribute("class", "user");
+            userElement.textContent = user.username;
+            userlistElement.appendChild(userElement);
+        })
     }
 }
+

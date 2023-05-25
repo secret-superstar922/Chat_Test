@@ -1,0 +1,10 @@
+.chat-page{
+    display: flex;
+    background-color: azure;
+    width: 300px;
+}
+
+.user{
+    border: 2px solid;
+    border-color: black;
+}

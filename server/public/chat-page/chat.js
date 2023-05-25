@@ -17,5 +17,16 @@ ws.onmessage = (e) => {
             uuid: json_data.uuid,
             username: json_data.username
         });
+        const userlistElement = document.getElementById("userlist");
+        userList.map((user) => {
+            var userElement = document.createElement("p");
+            userElement.setAttribute("id", user.uuid);
+            userElement.setAttribute("class", "user");
+            userElement.addEventListener('click', (event) => {
+
+            });
+            userElement.textContent = user.username;
+            userlistElement.appendChild(userElement);
+        });
     }
 };
