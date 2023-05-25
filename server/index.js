@@ -14,12 +14,32 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const ws_1 = require("ws");
 const express_1 = __importDefault(require("express"));
+const body_parser_1 = __importDefault(require("body-parser"));
 const database_1 = __importDefault(require("./database"));
 const models_1 = require("./models");
 const app = (0, express_1.default)();
-app.use(express_1.default.static('public'));
+app.use(express_1.default.static(`${__dirname}/public`));
+app.use(body_parser_1.default.json());
 app.get('/', (req, res) => {
-    res.sendFile(__dirname + '/index.html');
+    res.sendFile(`${__dirname}/public/login-page` + '/index.html');
+});
+app.get('/chat-page', (req, res) => {
+    res.sendFile(`${__dirname}/public/chat-page` + '/chat-page.html');
+});
+app.post("/login", (req, res) => {
+    models_1.User.findOne({ username: req.body.name })
+        .then((user) => {
+        if (!user) {
+            const newUser = new models_1.User({
+                username: req.body.name
+            });
+            newUser.save();
+            res.send({ status: "200", success: true, data: req.body.name });
+        }
+        else {
+            res.send({ status: "200", success: false, data: "The use has been taken!" });
+        }
+    }).catch(error => console.log(error));
 });
 const port = 3000;
 database_1.default.then(() => __awaiter(void 0, void 0, void 0, function* () {
@@ -35,24 +55,29 @@ wss.on('connection', (ws) => {
     ws.on('message', (str_data) => {
         const data_json = JSON.parse(str_data);
         if (data_json.command === "connect") {
-            let requestedUser = { ws: ws, uuid: generateUserId(), username: data_json.data };
-            models_1.User.findOne({ username: requestedUser.username })
-                .then((user) => {
-                if (!user) {
-                    const newUser = new models_1.User({
-                        username: requestedUser.username
-                    });
-                    newUser.save();
-                    clients.push(requestedUser);
-                }
-                else {
-                    console.log("Username has been taken!");
-                }
-            }).catch(error => console.log(error));
+            console.log(data_json.content);
         }
+        const newClient = {
+            ws: ws,
+            uuid: generateUserId(),
+            username: data_json.content
+        };
+        console.log(clients);
         clients.forEach((client) => {
-            console.log(client);
+            client.ws.send(JSON.stringify({
+                type: "broadcast",
+                uuid: newClient.uuid,
+                username: newClient.username
+            }));
         });
+        clients.forEach((client) => {
+            ws.send(JSON.stringify({
+                type: "addUserList",
+                uuid: client.uuid,
+                username: client.username
+            }));
+        });
+        clients.push(newClient);
     });
 });
 function generateUserId() {

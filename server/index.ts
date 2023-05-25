@@ -1,12 +1,35 @@
 import { WebSocket, WebSocketServer } from "ws";
 import express, {Request, Response} from 'express';
+import bodyParser from 'body-parser';
 import conn from './database';
 import {User} from './models';
 
 const app = express();
-app.use(express.static('public'));
-app.get('/', (req: Request, res: Response) => {
-    res.sendFile(__dirname + '/index.html');
+app.use(express.static(`${__dirname}/public`));
+app.use(bodyParser.json());
+
+app.get('/', (req:Request, res:Response) => {
+    res.sendFile(`${__dirname}/public/login-page` + '/index.html');
+});
+
+app.get('/chat-page', (req: Request, res: Response) => {
+    res.sendFile(`${__dirname}/public/chat-page` + '/chat-page.html');
+});
+
+app.post("/login", (req: Request, res: Response) => {
+    User.findOne({username: req.body.name})
+        .then((user) => {
+            if(!user) {
+                const newUser = new User({
+                    username: req.body.name
+                });
+                newUser.save();
+                res.send({status: "200", success: true, data:req.body.name});
+            }
+            else {
+                res.send({status: "200", success: false, data:"The use has been taken!"});
+            }
+        }).catch(error => console.log(error));
 });
 
 const port = 3000;
@@ -31,26 +54,35 @@ let clients: client[] = []
 wss.on('connection', (ws: WebSocket) => {
     ws.on('message', (str_data: string)=>{
         const data_json = JSON.parse(str_data);
+        
         if(data_json.command ==="connect") {
-            let requestedUser:client = {ws:ws, uuid:generateUserId(), username:data_json.data};
-
-            User.findOne({username: requestedUser.username})
-                .then((user) => {
-                    if(!user) {
-                        const newUser = new User({
-                            username:requestedUser.username
-                        });
-                        newUser.save();
-                        clients.push(requestedUser);
-                    }
-                    else {
-                        console.log("Username has been taken!");
-                    }
-                }).catch(error => console.log(error));
+            console.log(data_json.content);
         }
+
+        const newClient: client = {
+            ws:ws,
+            uuid:generateUserId(),
+            username: data_json.content
+        }
+        console.log(clients);
+
         clients.forEach((client) => {
-            console.log(client);
+            client.ws.send(JSON.stringify({
+                type: "broadcast",
+                uuid: newClient.uuid,
+                username: newClient.username
+            }))
         });
+
+        clients.forEach((client) => {
+            ws.send(JSON.stringify({
+                type: "addUserList",
+                uuid: client.uuid,
+                username: client.username
+            }));
+        });
+
+        clients.push(newClient);
     });
 })
 
