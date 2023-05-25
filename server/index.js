@@ -53,31 +53,38 @@ const wss = new ws_1.WebSocketServer({
 let clients = [];
 wss.on('connection', (ws) => {
     ws.on('message', (str_data) => {
+        let isValidUser = true;
         const data_json = JSON.parse(str_data);
         if (data_json.command === "connect") {
             console.log(data_json.content);
         }
-        const newClient = {
-            ws: ws,
-            uuid: generateUserId(),
-            username: data_json.content
-        };
-        console.log(clients);
-        clients.forEach((client) => {
-            client.ws.send(JSON.stringify({
-                type: "broadcast",
-                uuid: newClient.uuid,
-                username: newClient.username
-            }));
+        clients.forEach(client => {
+            if (client.username === data_json.content) {
+                isValidUser = false;
+            }
         });
-        clients.forEach((client) => {
-            ws.send(JSON.stringify({
-                type: "addUserList",
-                uuid: client.uuid,
-                username: client.username
-            }));
-        });
-        clients.push(newClient);
+        if (isValidUser) {
+            const newClient = {
+                ws: ws,
+                uuid: generateUserId(),
+                username: data_json.content
+            };
+            clients.forEach((client) => {
+                client.ws.send(JSON.stringify({
+                    type: "broadcast",
+                    uuid: newClient.uuid,
+                    username: newClient.username
+                }));
+            });
+            clients.forEach((client) => {
+                ws.send(JSON.stringify({
+                    type: "addUserList",
+                    uuid: client.uuid,
+                    username: client.username
+                }));
+            });
+            clients.push(newClient);
+        }
     });
 });
 function generateUserId() {

@@ -1,6 +1,7 @@
 "use strict";
 const ws = new WebSocket("ws://localhost:8080");
 let userList = [];
+let selectedUser;
 ws.onopen = (e) => {
     const username = localStorage.getItem("auth");
     const data = {
@@ -22,11 +23,25 @@ ws.onmessage = (e) => {
             var userElement = document.createElement("p");
             userElement.setAttribute("id", user.uuid);
             userElement.setAttribute("class", "user");
-            userElement.addEventListener('click', (event) => {
-
-            });
             userElement.textContent = user.username;
+            userElement.addEventListener('click', (event) => {
+                selectedUser.uuid = userElement.id;
+                if (userElement.textContent) {
+                    selectedUser.username = userElement.textContent;
+                }
+                userElement.style.backgroundColor = "red";
+            });
             userlistElement.appendChild(userElement);
         });
     }
 };
+function sendMessage() {
+    const messageElement = document.getElementById("message");
+    const data = {
+        command: "sendMessage",
+        to: selectedUser,
+        text: messageElement.value
+    };
+    const json_data = JSON.stringify(data);
+    ws.send(json_data);
+}

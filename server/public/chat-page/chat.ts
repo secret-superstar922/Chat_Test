@@ -1,10 +1,11 @@
 const ws:WebSocket = new WebSocket("ws://localhost:8080");
-interface user {
+interface User {
     uuid: string,
     username: string
 }
 
-let userList: user[] = [];
+let userList: User[] = [];
+let selectedUser: User;
 
 ws.onopen = (e) => {
     const username = localStorage.getItem("auth");
@@ -25,13 +26,36 @@ ws.onmessage = (e) => {
             username: json_data.username
         });
         const userlistElement = document.getElementById("userlist") as HTMLElement;
+
         userList.map((user) => {
-            var userElement = document.createElement("p") as HTMLElement;
+            var userElement = document.createElement("p");
             userElement.setAttribute("id", user.uuid);
             userElement.setAttribute("class", "user");
             userElement.textContent = user.username;
+            userElement.addEventListener('click', (event) => {
+                selectedUser.uuid = userElement.id;
+                if(userElement.textContent) {
+                    selectedUser.username = userElement.textContent;
+                }
+                userElement.style.backgroundColor = "red";
+            });
             userlistElement.appendChild(userElement);
-        })
+        });
     }
+}
+
+function sendMessage() {
+
+    const messageElement = document.getElementById("message") as HTMLInputElement;
+
+    const data = {
+        command: "sendMessage",
+        to: selectedUser,
+        text: messageElement.value
+    }
+
+    const json_data = JSON.stringify(data);
+
+    ws.send(json_data);
 }
 
