@@ -6,10 +6,11 @@ let selectedUser = {
     username: ""
 };
 ws.onopen = (e) => {
-    const username = localStorage.getItem("auth");
+    console.log("Init");
     const data = {
         command: "connect",
-        content: username,
+        uuid: localStorage.getItem("uuid"),
+        username: localStorage.getItem("username"),
     };
     ws.send(JSON.stringify(data));
 };
@@ -54,10 +55,11 @@ function sendMessage() {
     const messageElement = document.getElementById("message");
     const data = {
         command: "sendMessage",
-        from: localStorage.getItem("auth"),
+        from: localStorage.getItem("username"),
         to: selectedUser,
         text: messageElement.value
     };
     const json_data = JSON.stringify(data);
+    console.log(json_data);
     ws.send(json_data);
 }

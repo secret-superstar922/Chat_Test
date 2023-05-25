@@ -11,10 +11,11 @@ let selectedUser: User = {
 };
 
 ws.onopen = (e) => {
-    const username = localStorage.getItem("auth");
+    console.log("Init");
     const data = {
         command: "connect",
-        content: username,
+        uuid: localStorage.getItem("uuid"),
+        username: localStorage.getItem("username"),
     }
 
     ws.send(JSON.stringify(data));
@@ -51,6 +52,7 @@ ws.onmessage = (e) => {
             });
             userlistElement.appendChild(userElement);
         });
+
     } else if(json_data.type === "message") {
         const chatboardElement = document.getElementById('chatboard') as HTMLElement;
         const chatContentElement = document.createElement('div') as HTMLElement;
@@ -66,13 +68,14 @@ function sendMessage() {
 
     const data = {
         command: "sendMessage",
-        from: localStorage.getItem("auth"),
+        from: localStorage.getItem("username"),
         to: selectedUser,
         text: messageElement.value
     }
 
     const json_data = JSON.stringify(data);
 
+    console.log(json_data);
     ws.send(json_data);
 }
 

@@ -16,7 +16,8 @@ const ws_1 = require("ws");
 const express_1 = __importDefault(require("express"));
 const body_parser_1 = __importDefault(require("body-parser"));
 const database_1 = __importDefault(require("./database"));
-const models_1 = require("./models");
+const User_1 = require("./models/User");
+const Message_1 = require("./models/Message");
 const app = (0, express_1.default)();
 app.use(express_1.default.static(`${__dirname}/public`));
 app.use(body_parser_1.default.json());
@@ -27,17 +28,19 @@ app.get('/chat-page', (req, res) => {
     res.sendFile(`${__dirname}/public/chat-page` + '/chat-page.html');
 });
 app.post("/login", (req, res) => {
-    models_1.User.findOne({ username: req.body.name })
+    console.log(req.body);
+    User_1.User.findOne({ username: req.body.name })
         .then((user) => {
         if (!user) {
-            const newUser = new models_1.User({
-                username: req.body.name
+            const newUser = new User_1.User({
+                username: req.body.name,
+                uuid: req.body.uuid
             });
             newUser.save();
-            res.send({ status: "200", success: true, data: req.body.name });
+            res.send({ status: "200", success: true, payload: req.body });
         }
         else {
-            res.send({ status: "200", success: false, data: "The use has been taken!" });
+            res.send({ status: "200", success: false, payload: "The use has been taken!" });
         }
     }).catch(error => console.log(error));
 });
@@ -56,17 +59,16 @@ wss.on('connection', (ws) => {
         let isValidUser = true;
         const data_json = JSON.parse(str_data);
         if (data_json.command === "connect") {
-            console.log(data_json.content);
             clients.forEach(client => {
-                if (client.username === data_json.content) {
+                if (client.username === data_json.username) {
                     isValidUser = false;
                 }
             });
             if (isValidUser) {
                 const newClient = {
                     ws: ws,
-                    uuid: generateUserId(),
-                    username: data_json.content
+                    uuid: data_json.uuid,
+                    username: data_json.username
                 };
                 clients.forEach((client) => {
                     client.ws.send(JSON.stringify({
@@ -84,6 +86,17 @@ wss.on('connection', (ws) => {
                 });
                 clients.push(newClient);
             }
+            else {
+                clients.forEach((client) => {
+                    if (client.username !== data_json.username) {
+                        ws.send(JSON.stringify({
+                            type: "addUserList",
+                            uuid: client.uuid,
+                            username: client.username
+                        }));
+                    }
+                });
+            }
         }
         else if (data_json.command === "sendMessage") {
             console.log(data_json);
@@ -94,11 +107,15 @@ wss.on('connection', (ws) => {
                         from: data_json.from,
                         text: data_json.text
                     }));
+                    const newMessage = new Message_1.Message({
+                        from: data_json.from,
+                        to: data_json.to.username,
+                        text: data_json.text,
+                        created_at: new Date()
+                    });
+                    newMessage.save();
                 }
             });
         }
     });
 });
-function generateUserId() {
-    return Math.random().toString(36).substr(2, 8);
-}

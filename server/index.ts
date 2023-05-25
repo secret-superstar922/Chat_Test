@@ -2,7 +2,8 @@ import { WebSocket, WebSocketServer } from "ws";
 import express, {Request, Response} from 'express';
 import bodyParser from 'body-parser';
 import conn from './database';
-import {User} from './models';
+import {User} from './models/User';
+import { Message } from "./models/Message";
 
 const app = express();
 app.use(express.static(`${__dirname}/public`));
@@ -17,17 +18,19 @@ app.get('/chat-page', (req: Request, res: Response) => {
 });
 
 app.post("/login", (req: Request, res: Response) => {
+    console.log(req.body);
     User.findOne({username: req.body.name})
         .then((user) => {
             if(!user) {
                 const newUser = new User({
-                    username: req.body.name
+                    username: req.body.name,
+                    uuid: req.body.uuid
                 });
                 newUser.save();
-                res.send({status: "200", success: true, data:req.body.name});
+                res.send({status: "200", success: true, payload:req.body});
             }
             else {
-                res.send({status: "200", success: false, data:"The use has been taken!"});
+                res.send({status: "200", success: false, payload:"The use has been taken!"});
             }
         }).catch(error => console.log(error));
 });
@@ -58,18 +61,18 @@ wss.on('connection', (ws: WebSocket) => {
         const data_json = JSON.parse(str_data);
         
         if(data_json.command === "connect") {
-            console.log(data_json.content);
+            
             clients.forEach(client => {
-                if(client.username === data_json.content) {
+                if(client.username === data_json.username) {
                     isValidUser = false;
                 }
-            })
-    
+            });
+
             if(isValidUser) {
                 const newClient: client = {
                     ws:ws,
-                    uuid:generateUserId(),
-                    username: data_json.content
+                    uuid:data_json.uuid,
+                    username: data_json.username
                 }
         
                 clients.forEach((client) => {
@@ -89,9 +92,20 @@ wss.on('connection', (ws: WebSocket) => {
                 });
 
                 clients.push(newClient);
+            } else {
+                clients.forEach((client) => {
+                    if(client.username !== data_json.username) {
+                        ws.send(JSON.stringify({
+                            type: "addUserList",
+                            uuid: client.uuid,
+                            username: client.username
+                        }));
+                    }
+                });
             }
         } else if(data_json.command === "sendMessage") {
             console.log(data_json);
+
             clients.forEach((client) => {
                 if(client.uuid === data_json.to.uuid) {
                     client.ws.send(JSON.stringify({
@@ -99,13 +113,17 @@ wss.on('connection', (ws: WebSocket) => {
                         from: data_json.from,
                         text: data_json.text
                     }));
+
+                    const newMessage = new Message({
+                        from: data_json.from,
+                        to: data_json.to.username,
+                        text: data_json.text,
+                        created_at: new Date()
+                    });
+                    newMessage.save();
                 }
             })
         }
     });
 })
-
-function generateUserId(): String {
-    return Math.random().toString(36).substr(2, 8);
-}
 

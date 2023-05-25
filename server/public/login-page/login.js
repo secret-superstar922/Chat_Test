@@ -3,7 +3,8 @@ function login() {
     const inputElement = document.getElementById("username");
     const username = inputElement.value;
     const user = {
-        name: username
+        name: username,
+        uuid: generateUserId()
     };
     let options = {
         method: 'POST',
@@ -15,12 +16,17 @@ function login() {
     fetch("http://localhost:3000/login", options)
         .then(response => {
         if (response.ok) {
-            console.log(response.json().then(d => console.log(d)));
-            localStorage.setItem("auth", username);
-            window.location.assign('/chat-page');
+            response.json().then(payload => {
+                localStorage.setItem("username", payload.payload.name);
+                localStorage.setItem("uuid", payload.payload.uuid);
+                window.location.assign('/chat-page');
+            });
         }
         else {
             console.error('Error sending data:', response.statusText);
         }
     });
+}
+function generateUserId() {
+    return Math.random().toString(36).substr(2, 8);
 }
