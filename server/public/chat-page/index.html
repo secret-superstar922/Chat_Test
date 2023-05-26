@@ -4,16 +4,23 @@
         <link rel="stylesheet" href="chat-page.css">
     </head>
     <body>
-        <h1>Start chat</h1>
-        <div class="chat-page">
-            <div id = "userlist">
-                UserList
+        <h1>sdsd</h1>
+        <div class="container">
+            <div class="sidebar">
             </div>
-            <div id = "chatboard">
-                <input type="text" id="message">
-                <button onclick="sendMessage()">send</button>
+            <div class="chat-board">
+                <div class="chat-panel">
+                </div>
+                <div class="chat-input-box">
+                    <input type="text" id = "message" class="chat-input-text">
+                    <div class="button-box">
+                        <button class="btn-send" onclick="sendMessage()">send</button>
+                    </div>
+                </div>
+                
             </div>
         </div>
+        <script> var exports = {}; </script>
         <script src = "chat.js"></script>
     </body>
 </html>

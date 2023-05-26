@@ -47,7 +47,7 @@ app.post("/login", (req: Request, res: Response) => {
 app.post("/message", (req: Request, res: Response) => {
     const user1: string = req.body.user1;
     const user2: string = req.body.user2;
-    
+
     Message.find({
         $or: [
             {
@@ -80,7 +80,8 @@ const wss: WebSocketServer = new WebSocketServer({
 interface client {
     ws: WebSocket,
     uuid: String,
-    username: String
+    username: String,
+    isOnline: Boolean
 }
 
 let clients: client[] = []
@@ -88,7 +89,6 @@ let clients: client[] = []
 wss.on('connection', (ws: WebSocket) => {
     ws.on('message', (str_data: string)=>{
         let isValidUser: Boolean = true;
-
         const data_json = JSON.parse(str_data);
 
         if(data_json.command === "connect") {
@@ -102,40 +102,84 @@ wss.on('connection', (ws: WebSocket) => {
                 const newClient: client = {
                     ws:ws,
                     uuid:data_json.uuid,
-                    username: data_json.username
+                    username: data_json.username,
+                    isOnline: true
                 }
-        
+
                 clients.forEach((client) => {
                     client.ws.send(JSON.stringify({
                         type: "broadcast",
                         uuid: newClient.uuid,
-                        username: newClient.username
+                        username: newClient.username,
+                        isOnline: newClient.isOnline
                     }))
-                });
-        
-                clients.forEach((client) => {
-                    ws.send(JSON.stringify({
-                        type: "addUserList",
-                        uuid: client.uuid,
-                        username: client.username
-                    }));
                 });
 
                 clients.push(newClient);
-            } else {
-                clients.forEach((client) => {
-                    if(client.username !== data_json.username) {
-                        ws.send(JSON.stringify({
-                            type: "addUserList",
-                            uuid: client.uuid,
-                            username: client.username
-                        }));
-                    }
+                User.find().then(users => {
+                    users.map(user => {
+                        if(user.username !== newClient.username) {
+                            ws.send(JSON.stringify({
+                                type: "addUser",
+                                uuid: user.uuid,
+                                username: user.username,
+                                isOnline: user.isOnline
+                            }));
+                        }
+                    });
+                }).catch(error => console.log('Failed to fetch all users from database'));
+
+                User.findOneAndUpdate(
+                    {username: newClient.username},
+                    {isOnline: true},
+                    {new: true}
+                ).then(updatedUser => {
+                    if (updatedUser) {
+                      } else {
+                        console.log(`User not found.`);
+                      }
+                }).catch(error => {
+                    console.error(`Error updating user: ${error}`);
                 });
+            } else {
+                User.findOneAndUpdate(
+                    {username: data_json.username},
+                    {isOnline: true},
+                    {new: true}
+                ).then(updatedUser => {
+                    if (updatedUser) {
+                        User.find().then(users => {
+                            users.map(user => {
+                                if(user.username !== data_json.username) {
+                                    console.log(user.isOnline);
+                                    ws.send(JSON.stringify({
+                                        type: "addUser",
+                                        uuid: user.uuid,
+                                        username: user.username,
+                                        isOnline: user.isOnline
+                                    }));
+                                }
+                            });
+                        }).catch(error => console.log('Failed to fetch all users from database'));
+                      } else {
+                        console.log(`User not found.`);
+                      }
+                }).catch(error => {
+                    console.error(`Error updating user: ${error}`);
+                });
+
+                clients.map(client => 
+                    client.ws.send(JSON.stringify({
+                        type: "statusUpdate",
+                        username: data_json.username,
+                        uuid: data_json.uuid,
+                        isOnline: true
+                    }))
+                );
             }
         } else if(data_json.command === "sendMessage") {
             console.log(data_json);
-
+            console.log(clients.length);
             clients.forEach((client) => {
                 if(client.username === data_json.to.username) {
                     client.ws.send(JSON.stringify({
@@ -154,6 +198,36 @@ wss.on('connection', (ws: WebSocket) => {
                 }
             })
         }
+    });
+
+    ws.on('close', (code: number, reason: string) => {
+        const clientIndex = clients.findIndex((client) => client.ws === ws);
+        const offlineUsername = clients.at(clientIndex)?.username;
+        const offlineUuid = clients.at(clientIndex)?.uuid;
+
+        if(clientIndex !== -1) {
+            clients.splice(clientIndex, 1);
+        }
+
+        User.findOneAndUpdate(
+            {username: offlineUsername},
+            {isOnline: false},
+            {new: true}
+        ).then(updatedUser => {
+            if (updatedUser) {
+              } else {
+                console.log(`User not found.`);
+              }
+        }).catch(error => {
+            console.error(`Error updating user: ${error}`);
+        });
+
+        clients.map(client => client.ws.send(JSON.stringify({
+            type: "statusUpdate",
+            username: offlineUsername,
+            uuid: offlineUuid,
+            isOnline: false
+        })));
     });
 })
 

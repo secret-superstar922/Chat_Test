@@ -3,6 +3,7 @@ import {Schema, model} from 'mongoose';
 export interface IUser {
     username: String,
     uuid: String,
+    isOnline: Boolean
 }
 
 const UserSchema = new Schema<IUser>({
@@ -13,8 +14,12 @@ const UserSchema = new Schema<IUser>({
     },
     uuid: {
         type: String,
-        required:true,
-        unique:true
+        required: true,
+        unique: true
+    },
+    isOnline: {
+        type: Boolean,
+        default: false
     }
 });
 
