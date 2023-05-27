@@ -1,6 +1,6 @@
 import { Message } from "../../models/Message";
 
-const ws:WebSocket = new WebSocket("ws://localhost:8080");
+const ws:WebSocket = new WebSocket("ws://" + window.location.hostname + ":8080");
 interface User {
     uuid: string,
     username: string,

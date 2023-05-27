@@ -244,3 +244,5 @@ wss.on('connection', (ws: WebSocket) => {
         })));
     });
 });
+
+export default app;

@@ -6,8 +6,7 @@ function login() {
         name: inputElement.value,
         uuid: generateUserId()
       };
-      
-  
+
       let options = {
         method: 'POST',
         headers: {
@@ -15,9 +14,9 @@ function login() {
         },
         body: JSON.stringify(user)
       };
-    
+
       fetch("http://localhost:3000/login", options)
-        .then(response => { 
+        .then(response => {
           if (response.ok) {
             response.json().then(payload => {
               localStorage.setItem("username", user.name);
