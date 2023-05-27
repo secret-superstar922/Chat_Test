@@ -1,0 +1,62 @@
+.container {
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center; 
+    background-color:  rgb(6, 32, 49);
+}
+.login-panel {
+    width: 30rem;
+    border-radius: 1rem;
+    box-shadow: 1px 1px 1px 1px white;
+    padding: 2rem;
+}
+.d-flex {
+    display: flex;
+}
+.flex-1 {
+    flex: 1;
+}
+.flex-2 {
+    flex: 2;
+}
+.flex-3 {
+    flex: 3;
+}
+.flex-4 {
+    flex: 4;
+}
+input {
+    border-radius: 3px;
+    width: 100%;
+}
+
+body{
+    background-color: rgb(6, 32, 49);
+}
+
+
+.text-light {
+    color: white;
+}
+
+.justify-content-center {
+    justify-content: center;
+}
+
+.login-btn {
+    background-color: rgb(22, 95, 138);
+    width: 50%;
+    padding: 0.3rem 0 0.3rem 0;
+    border-radius: 1rem;
+}
+
+.form-group {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 0.5rem;
+}
+
+input {
+    width: 250px;
+}

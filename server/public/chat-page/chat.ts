@@ -82,7 +82,7 @@ ws.onmessage = (e) => {
     });
 
     userList.map((user) => {
-        
+
         if (selectedUser.uuid === "" && userList.length > 0) {
             selectedUser = userList[0];
         }
