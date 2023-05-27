@@ -8,10 +8,9 @@ let selectedUser = {
     username: "",
     isOnline: true
 };
-let messageList = [];
 const username = (_a = localStorage.getItem("username")) !== null && _a !== void 0 ? _a : "";
 document.getElementsByTagName('h1')[0].innerText = username;
-ws.onopen = (e) => {
+ws.onopen = () => {
     const data = {
         command: "connect",
         uuid: localStorage.getItem("uuid"),
@@ -56,6 +55,9 @@ ws.onmessage = (e) => {
         childElement.remove();
     });
     userList.map((user) => {
+        if (selectedUser.uuid === "" && userList.length > 0) {
+            selectedUser = userList[0];
+        }
         var userElement = document.createElement("div");
         var textElement = document.createElement("div");
         var statusElement = document.createElement("div");
@@ -65,6 +67,10 @@ ws.onmessage = (e) => {
         userElement.appendChild(statusElement);
         userElement.appendChild(textElement);
         userlistElement.appendChild(userElement);
+        console.log(user.uuid, "uuid", selectedUser.uuid);
+        if (user.uuid === selectedUser.uuid) {
+            userElement.classList.add("active");
+        }
         userElement.addEventListener("click", event => {
             var userElementList = document.getElementsByClassName('userItem');
             for (var i = 0; i < userElementList.length; i++) {
@@ -125,7 +131,61 @@ function sendMessage() {
     };
     const json_data = JSON.stringify(data);
     console.log(json_data);
-    ws.send(json_data);
+    console.log("Check Online Status");
+    console.log(ws.readyState);
+    if (navigator.onLine) {
+        console.log("Online");
+        ws.send(json_data);
+    }
+    else {
+        console.log("Offline");
+        if ('serviceWorker' in navigator && 'SyncManager' in window) {
+            navigator.serviceWorker.ready
+                .then(function (registration) {
+                const request = window.indexedDB.open('offline-messages', 4);
+                // Handle database opening success
+                request.onsuccess = function (event) {
+                    const db = event.target.result;
+                    // Start a transaction and access the object store
+                    const transaction = db.transaction(['messages'], 'readwrite');
+                    const store = transaction.objectStore('messages');
+                    // Create a new message object
+                    const newMessage = data;
+                    // Add the message to the object store
+                    const addRequest = store.add(newMessage);
+                    // Handle message addition success
+                    addRequest.onsuccess = function () {
+                        console.log('Message saved offline:', newMessage);
+                        registration.sync.register('sendMessages')
+                            .then(function () {
+                            console.log('Sync event registered');
+                        })
+                            .catch(function (error) {
+                            console.error('Failed to register sync event:', error);
+                        });
+                    };
+                    // Handle message addition error
+                    addRequest.onerror = function (error) {
+                        console.error('Failed to save message offline:', error);
+                    };
+                    // Close the database connection
+                    transaction.oncomplete = function () {
+                        db.close();
+                    };
+                };
+                request.onupgradeneeded = (event) => {
+                    const db = event.target.result;
+                    console.log("Creating Store");
+                    const objectStore = db.createObjectStore('messages', { autoIncrement: true });
+                    objectStore.createIndex('timestamp', 'timestamp');
+                };
+                // Handle database opening error
+                request.onerror = function (error) {
+                    console.error('Failed to open database:', error);
+                };
+            });
+        }
+    }
     const chatpanelElement = document.getElementsByClassName('chat-panel')[0];
     appendMessageElementToChatPanel(chatpanelElement, (_a = localStorage.getItem("username")) !== null && _a !== void 0 ? _a : "", messageElement.value);
     messageElement.value = "";

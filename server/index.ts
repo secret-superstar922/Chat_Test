@@ -66,6 +66,20 @@ app.post("/message", (req: Request, res: Response) => {
     })
 });
 
+app.post("/saveofflinemessage", (req: Request, res: Response) => {
+    const messages = req.body;
+
+    messages.map((message: any) => {
+        const newMessage = new Message({
+            from: message.from.username,
+            to: message.to.username,
+            text: message.text,
+            created_at: new Date()
+        });
+        newMessage.save();
+    })
+});
+
 const port = 3000;
 conn.then(async() => {
     app.listen(port, () => {
@@ -229,5 +243,4 @@ wss.on('connection', (ws: WebSocket) => {
             isOnline: false
         })));
     });
-})
-
+});

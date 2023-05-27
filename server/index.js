@@ -72,6 +72,18 @@ app.post("/message", (req, res) => {
         });
     });
 });
+app.post("/saveofflinemessage", (req, res) => {
+    const messages = req.body;
+    messages.map((message) => {
+        const newMessage = new Message_1.Message({
+            from: message.from.username,
+            to: message.to.username,
+            text: message.text,
+            created_at: new Date()
+        });
+        newMessage.save();
+    });
+});
 const port = 3000;
 database_1.default.then(() => __awaiter(void 0, void 0, void 0, function* () {
     app.listen(port, () => {

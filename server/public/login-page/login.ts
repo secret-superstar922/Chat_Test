@@ -26,9 +26,20 @@ function login() {
           console.error('Error sending data:', response.statusText);
         }
       });
-  }
-  
+}
 
 function generateUserId(): string {
     return Math.random().toString(36).substr(2, 8);
 }
+
+const registerServiceWorker = async() => {
+  if("serviceWorker" in navigator) {
+    try{
+      await navigator.serviceWorker.register("sw.js", {scope:"/"});
+    } catch(error) {
+      console.log("Registration failed with ${error}");
+    }
+  }
+}
+
+registerServiceWorker();

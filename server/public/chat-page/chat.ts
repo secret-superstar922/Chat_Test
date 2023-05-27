@@ -20,13 +20,20 @@ let selectedUser: User = {
     username: "",
     isOnline: true
 };
-
-let messageList: Message[] = [];
+interface SyncManager {
+    getTags(): Promise<string[]>;
+    register(tag: string): Promise<void>;
+}
+declare global {
+    interface ServiceWorkerRegistration {
+        readonly sync: SyncManager;
+    }
+}
 
 const username = localStorage.getItem("username") ?? "";
 document.getElementsByTagName('h1')[0].innerText = username;
 
-ws.onopen = (e) => {
+ws.onopen = () => {
     const data = {
         command: "connect",
         uuid: localStorage.getItem("uuid"),
@@ -40,7 +47,7 @@ ws.onmessage = (e) => {
     const json_data = JSON.parse(e.data);
 
     const chatpanelElement = document.getElementsByClassName('chat-panel')[0] as HTMLElement;
-
+ 
     if(json_data.type === "broadcast" || json_data.type === "addUser") {
         if(userList.findIndex(user => user.username === json_data.username) === -1) {
             userList.push({
@@ -75,38 +82,44 @@ ws.onmessage = (e) => {
     });
 
     userList.map((user) => {
+        
+        if (selectedUser.uuid === "" && userList.length > 0) {
+            selectedUser = userList[0];
+        }
         var userElement = document.createElement("div");
         var textElement = document.createElement("div");
         var statusElement = document.createElement("div");
-
         userElement.setAttribute("class", "userItem");
         textElement.innerHTML = user.username;
         statusElement.setAttribute("class", "status");
-
+        
         userElement.appendChild(statusElement);
         userElement.appendChild(textElement);
         userlistElement.appendChild(userElement);
-
+        console.log(user.uuid, "uuid", selectedUser.uuid)
+        if (user.uuid === selectedUser.uuid) {
+            userElement.classList.add("active");
+        }
         userElement.addEventListener("click", event => {
             var userElementList = document.getElementsByClassName('userItem');
             for(var i = 0 ; i < userElementList.length; i ++){
                 userElementList[i].classList.remove('active');
             }
             userElement.classList.add("active");
-
+            
             const childMsgElements = chatpanelElement.querySelectorAll('div');
             childMsgElements.forEach(childMsgElement => {
                 childMsgElement.remove();
             })
-
+            
             selectedUser.username = user.username;
             selectedUser.uuid = user.uuid;
-
+            
             const userPair = {
                 user1: localStorage.getItem("username"),
                 user2: userElement.textContent
             }
-
+            
             let options = {
                 method: 'POST',
                 headers: {
@@ -114,13 +127,13 @@ ws.onmessage = (e) => {
                 },
                 body: JSON.stringify(userPair)
             }
-
+            
             fetch("http://localhost:3000/message", options)
-                .then(response => {
-                    if(response.ok) {
-                        response.json()
-                                .then(payload => {
-                                    payload.payload.map((message: Message) => {
+            .then(response => {
+                if(response.ok) {
+                    response.json()
+                    .then(payload => {
+                        payload.payload.map((message: Message) => {
                                     console.log("message", message);
 
                                     appendMessageElementToChatPanel(chatpanelElement, message.from, message.text);
@@ -133,7 +146,7 @@ ws.onmessage = (e) => {
         });
 
         var statusElements = userElement.getElementsByClassName('status');
-        
+
         statusElements[0].classList.remove('active');
         if(user.isOnline) {
             statusElements[0].classList.add('active');
@@ -157,7 +170,73 @@ function sendMessage() {
     const json_data = JSON.stringify(data);
 
     console.log(json_data);
-    ws.send(json_data);
+    console.log("Check Online Status")
+    console.log(ws.readyState)
+
+    if(navigator.onLine){
+        console.log("Online");
+
+        ws.send(json_data);
+    }
+    else{
+        console.log("Offline");
+
+        if ('serviceWorker' in navigator && 'SyncManager' in window) {
+            navigator.serviceWorker.ready
+              .then(function(registration: ServiceWorkerRegistration) {
+                const request = window.indexedDB.open('offline-messages', 4);
+
+                // Handle database opening success
+                request.onsuccess = function(event) {
+                    const db = (event.target as IDBOpenDBRequest).result as  IDBDatabase;
+                    // Start a transaction and access the object store
+                    const transaction = db.transaction(['messages'], 'readwrite');
+                    const store = transaction.objectStore('messages');
+
+                    // Create a new message object
+                    const newMessage = data;
+
+                    // Add the message to the object store
+                    const addRequest = store.add(newMessage);
+
+                    // Handle message addition success
+                    addRequest.onsuccess = function() {
+                        console.log('Message saved offline:', newMessage);
+
+                        registration.sync.register('sendMessages')
+                            .then(function() {
+                                console.log('Sync event registered');
+                            })
+                            .catch(function(error) {
+                                console.error('Failed to register sync event:', error);
+                            });
+                    };
+
+                    // Handle message addition error
+                    addRequest.onerror = function(error) {
+                        console.error('Failed to save message offline:', error);
+                    };
+
+                    // Close the database connection
+                    transaction.oncomplete = function() {
+                        db.close();
+                    };
+                };
+
+                request.onupgradeneeded = (event) => {
+                    const db = (event.target as IDBOpenDBRequest).result as IDBDatabase;
+                    console.log("Creating Store")
+                    const objectStore = db.createObjectStore('messages', { autoIncrement: true });
+                    objectStore.createIndex('timestamp', 'timestamp');
+                };
+
+                // Handle database opening error
+                request.onerror = function(error) {
+                    console.error('Failed to open database:', error);
+                };
+            })
+        }
+    }
 
     const chatpanelElement = document.getElementsByClassName('chat-panel')[0] as HTMLElement;
     appendMessageElementToChatPanel(chatpanelElement, localStorage.getItem("username") ?? "", messageElement.value);
