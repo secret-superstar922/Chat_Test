@@ -219,3 +219,4 @@ wss.on('connection', (ws) => {
         })));
     });
 });
+exports.default = app;

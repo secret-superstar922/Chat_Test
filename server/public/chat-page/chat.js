@@ -1,7 +1,7 @@
 "use strict";
 var _a;
 Object.defineProperty(exports, "__esModule", { value: true });
-const ws = new WebSocket("ws://localhost:8080");
+const ws = new WebSocket("ws://" + window.location.hostname + ":8080");
 let userList = [];
 let selectedUser = {
     uuid: "",
