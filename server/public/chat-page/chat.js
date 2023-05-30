@@ -67,7 +67,6 @@ ws.onmessage = (e) => {
         userElement.appendChild(statusElement);
         userElement.appendChild(textElement);
         userlistElement.appendChild(userElement);
-        console.log(user.uuid, "uuid", selectedUser.uuid);
         if (user.uuid === selectedUser.uuid) {
             userElement.classList.add("active");
         }
@@ -100,7 +99,6 @@ ws.onmessage = (e) => {
                     response.json()
                         .then(payload => {
                         payload.payload.map((message) => {
-                            console.log("message", message);
                             appendMessageElementToChatPanel(chatpanelElement, message.from, message.text);
                         });
                     });
@@ -130,15 +128,10 @@ function sendMessage() {
         text: messageElement.value
     };
     const json_data = JSON.stringify(data);
-    console.log(json_data);
-    console.log("Check Online Status");
-    console.log(ws.readyState);
     if (navigator.onLine) {
-        console.log("Online");
         ws.send(json_data);
     }
     else {
-        console.log("Offline");
         if ('serviceWorker' in navigator && 'SyncManager' in window) {
             navigator.serviceWorker.ready
                 .then(function (registration) {
@@ -155,7 +148,6 @@ function sendMessage() {
                     const addRequest = store.add(newMessage);
                     // Handle message addition success
                     addRequest.onsuccess = function () {
-                        console.log('Message saved offline:', newMessage);
                         registration.sync.register('sendMessages')
                             .then(function () {
                             console.log('Sync event registered');
@@ -175,7 +167,6 @@ function sendMessage() {
                 };
                 request.onupgradeneeded = (event) => {
                     const db = event.target.result;
-                    console.log("Creating Store");
                     const objectStore = db.createObjectStore('messages', { autoIncrement: true });
                     objectStore.createIndex('timestamp', 'timestamp');
                 };

@@ -18,6 +18,8 @@ const body_parser_1 = __importDefault(require("body-parser"));
 const database_1 = __importDefault(require("./database"));
 const User_1 = require("./models/User");
 const Message_1 = require("./models/Message");
+const dotenv_1 = __importDefault(require("dotenv"));
+dotenv_1.default.config();
 const app = (0, express_1.default)();
 app.use(express_1.default.static(`${__dirname}/public`));
 app.use(body_parser_1.default.json());
@@ -28,7 +30,6 @@ app.get('/chat-page', (req, res) => {
     res.sendFile(`${__dirname}/public/chat-page` + '/chat-page.html');
 });
 app.post("/login", (req, res) => {
-    console.log(req.body);
     User_1.User.findOne({ username: req.body.name })
         .then((user) => {
         if (!user) {
@@ -84,7 +85,7 @@ app.post("/saveofflinemessage", (req, res) => {
         newMessage.save();
     });
 });
-const port = 3000;
+const port = process.env.PORT;
 database_1.default.then(() => __awaiter(void 0, void 0, void 0, function* () {
     app.listen(port, () => {
         console.log(`Server is running on port ${port}`);
@@ -148,7 +149,6 @@ wss.on('connection', (ws) => {
                         User_1.User.find().then(users => {
                             users.map(user => {
                                 if (user.username !== data_json.username) {
-                                    console.log(user.isOnline);
                                     ws.send(JSON.stringify({
                                         type: "addUser",
                                         uuid: user.uuid,
@@ -174,8 +174,6 @@ wss.on('connection', (ws) => {
             }
         }
         else if (data_json.command === "sendMessage") {
-            console.log(data_json);
-            console.log(clients.length);
             clients.forEach((client) => {
                 if (client.username === data_json.to.username) {
                     client.ws.send(JSON.stringify({

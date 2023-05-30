@@ -47,7 +47,7 @@ ws.onmessage = (e) => {
     const json_data = JSON.parse(e.data);
 
     const chatpanelElement = document.getElementsByClassName('chat-panel')[0] as HTMLElement;
- 
+
     if(json_data.type === "broadcast" || json_data.type === "addUser") {
         if(userList.findIndex(user => user.username === json_data.username) === -1) {
             userList.push({
@@ -92,11 +92,11 @@ ws.onmessage = (e) => {
         userElement.setAttribute("class", "userItem");
         textElement.innerHTML = user.username;
         statusElement.setAttribute("class", "status");
-        
+
         userElement.appendChild(statusElement);
         userElement.appendChild(textElement);
         userlistElement.appendChild(userElement);
-        console.log(user.uuid, "uuid", selectedUser.uuid)
+
         if (user.uuid === selectedUser.uuid) {
             userElement.classList.add("active");
         }
@@ -106,20 +106,20 @@ ws.onmessage = (e) => {
                 userElementList[i].classList.remove('active');
             }
             userElement.classList.add("active");
-            
+
             const childMsgElements = chatpanelElement.querySelectorAll('div');
             childMsgElements.forEach(childMsgElement => {
                 childMsgElement.remove();
-            })
-            
+            });
+
             selectedUser.username = user.username;
             selectedUser.uuid = user.uuid;
-            
+
             const userPair = {
                 user1: localStorage.getItem("username"),
                 user2: userElement.textContent
             }
-            
+
             let options = {
                 method: 'POST',
                 headers: {
@@ -127,15 +127,13 @@ ws.onmessage = (e) => {
                 },
                 body: JSON.stringify(userPair)
             }
-            
+
             fetch("http://localhost:3000/message", options)
             .then(response => {
                 if(response.ok) {
                     response.json()
                     .then(payload => {
                         payload.payload.map((message: Message) => {
-                                    console.log("message", message);
-
                                     appendMessageElementToChatPanel(chatpanelElement, message.from, message.text);
                             });
                         });
@@ -169,18 +167,10 @@ function sendMessage() {
 
     const json_data = JSON.stringify(data);
 
-    console.log(json_data);
-    console.log("Check Online Status")
-    console.log(ws.readyState)
-
     if(navigator.onLine){
-        console.log("Online");
-
         ws.send(json_data);
     }
     else{
-        console.log("Offline");
-
         if ('serviceWorker' in navigator && 'SyncManager' in window) {
             navigator.serviceWorker.ready
               .then(function(registration: ServiceWorkerRegistration) {
@@ -201,8 +191,6 @@ function sendMessage() {
 
                     // Handle message addition success
                     addRequest.onsuccess = function() {
-                        console.log('Message saved offline:', newMessage);
-
                         registration.sync.register('sendMessages')
                             .then(function() {
                                 console.log('Sync event registered');
@@ -225,7 +213,6 @@ function sendMessage() {
 
                 request.onupgradeneeded = (event) => {
                     const db = (event.target as IDBOpenDBRequest).result as IDBDatabase;
-                    console.log("Creating Store")
                     const objectStore = db.createObjectStore('messages', { autoIncrement: true });
                     objectStore.createIndex('timestamp', 'timestamp');
                 };

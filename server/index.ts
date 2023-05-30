@@ -1,9 +1,12 @@
 import { WebSocket, WebSocketServer } from "ws";
-import express, {Request, Response} from 'express';
+import express, { Request, Response } from 'express';
 import bodyParser from 'body-parser';
 import conn from './database';
-import {User} from './models/User';
+import { User } from './models/User';
 import { Message } from "./models/Message";
+
+import dotenv from 'dotenv';
+dotenv.config();
 
 const app = express();
 app.use(express.static(`${__dirname}/public`));
@@ -18,7 +21,6 @@ app.get('/chat-page', (req: Request, res: Response) => {
 });
 
 app.post("/login", (req: Request, res: Response) => {
-    console.log(req.body);
     User.findOne({username: req.body.name})
         .then((user) => {
             if(!user) {
@@ -29,15 +31,15 @@ app.post("/login", (req: Request, res: Response) => {
                 newUser.save();
 
                 res.send({
-                    status: "200", 
-                    success: true, 
+                    status: "200",
+                    success: true,
                     payload: req.body
                 });
             }
             else {
                 res.send({
-                    status: "200", 
-                    success: false, 
+                    status: "200",
+                    success: false,
                     payload: "The user has been taken!"
                 });
             }
@@ -80,8 +82,7 @@ app.post("/saveofflinemessage", (req: Request, res: Response) => {
     })
 });
 
-
-const port = 3000;
+const port = process.env.PORT;
 conn.then(async() => {
     app.listen(port, () => {
         console.log(`Server is running on port ${port}`);
@@ -166,7 +167,6 @@ wss.on('connection', (ws: WebSocket) => {
                         User.find().then(users => {
                             users.map(user => {
                                 if(user.username !== data_json.username) {
-                                    console.log(user.isOnline);
                                     ws.send(JSON.stringify({
                                         type: "addUser",
                                         uuid: user.uuid,
@@ -193,8 +193,6 @@ wss.on('connection', (ws: WebSocket) => {
                 );
             }
         } else if(data_json.command === "sendMessage") {
-            console.log(data_json);
-            console.log(clients.length);
             clients.forEach((client) => {
                 if(client.username === data_json.to.username) {
                     client.ws.send(JSON.stringify({
