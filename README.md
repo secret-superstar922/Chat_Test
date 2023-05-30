@@ -16,15 +16,19 @@ This is a simple chat web application built with Node.js (Express.js) and TypeSc
 
 1. Clone the repository
 
-2. Install dependencies for the frontend and backend:
+2. Install dependencies for the frontend and backend
 
    `npm install`
   
-3. Quick Start
+3. Copy .env file
+
+   `cp .env.example .env`
+
+4. Quick Start
 
    `npm start`
 
-4. Run the test
+5. Run the test
 
    `npm run test`
 
